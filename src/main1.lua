@@ -65,6 +65,7 @@ local function main()
     local dt = os.time()-t
     printf("%d iterations completed in %s ms", 1000*(dt))
   end)
+  coroutine.resume(client)
 end
 
 
