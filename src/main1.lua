@@ -1,6 +1,6 @@
 require('printf')
 
-local function main_tcp()
+local function server()
   -- load namespace
   local socket = require("socket")
   -- create a TCP socket and bind it to the local host, at any port
@@ -44,35 +44,33 @@ end
 
 local function main()
   --main_udp()
-  print("0")
-  local run = coroutine.create(main_tcp())
-  print("1 run="..run)
-  coroutine.resume(run)
-  print("2")
+  if args[1] == 'server' then
+    local server_coroutine = coroutine.create(server())
+    coroutine.resume(server_coroutine)
+  else
+    local client = coroutine.create(function()
+      print("Client started")
+      local ITER = 10000
+      -- load namespace
+      local tcp = assert(socket.tcp())
   
-  local client = coroutine.create(function()
-    print("Client started")
-    local ITER = 10000
-    -- load namespace
-    local tcp = assert(socket.tcp())
-
-    local con = tcp:connect("127.0.0.1", 44444);
-    con.setoption('tcp-nodelay', true)
-    local data = "request"
-    print("Client: started benchmark")
-    t = os.time()
-    for i=1,ITER,1 do
-      tcp:send(data.."\n")
-      local rcvdata = tcp:receive("*1")
-      if (rcvdata ~= data) then
-        print("ERROR, recv="..rcvdata)
+      local con = tcp:connect("127.0.0.1", 44444);
+      con.setoption('tcp-nodelay', true)
+      local data = "request"
+      print("Client: started benchmark")
+      t = os.time()
+      for i=1,ITER,1 do
+        tcp:send(data.."\n")
+        local rcvdata = tcp:receive("*1")
+        if (rcvdata ~= data) then
+          print("ERROR, recv="..rcvdata)
+        end
       end
-    end
-    local dt = os.time()-t
-    printf("%d iterations completed in %s ms", 1000*(dt))
-  end)
-  coroutine.resume(client)
-  print("resumed client")
+      local dt = os.time()-t
+      printf("%d iterations completed in %s ms", 1000*(dt))
+    end)
+    coroutine.resume(client)
+  end
 end
 
 
