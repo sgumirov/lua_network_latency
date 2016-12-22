@@ -69,6 +69,7 @@ local function main()
     printf("%d iterations completed in %s ms", 1000*(dt))
   end)
   coroutine.resume(client)
+  print("resumed client")
 end
 
 
