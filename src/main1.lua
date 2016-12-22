@@ -44,7 +44,7 @@ end
 
 local function main()
   --main_udp()
-  if args[1] == 'server' then
+  if arg[1] == 'server' then
     local server_coroutine = coroutine.create(server())
     coroutine.resume(server_coroutine)
   else
