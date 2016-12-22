@@ -57,8 +57,8 @@ function client_run()
     t = os.time()
     for i=1,ITER,1 do
       con:send(data.."\n")
-      local rcvdata = con:receive("*1")
-      if (rcvdata ~= data) then
+      local rcvdata, err = con:receive()
+      if err then
         print("ERROR, recv="..rcvdata)
       end
     end
