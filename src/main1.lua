@@ -30,7 +30,7 @@ local function main_tcp()
       if (err) then print("ERROR="..err) end
       -- done with client, close the object
       client:close()
-      print("closed con")
+      print("Server: closed con")
     end
     
     local h = coroutine.create(handler)
@@ -47,6 +47,7 @@ local function main()
   coroutine.resume(run)
   
   local client = coroutine.create(function()
+    print("Client started")
     local ITER = 10000
     -- load namespace
     local tcp = assert(socket.tcp())
@@ -54,6 +55,7 @@ local function main()
     local con = tcp:connect("127.0.0.1", 44444);
     con.setoption('tcp-nodelay', true)
     local data = "request"
+    print("Client: started benchmark")
     t = os.time()
     for i=1,ITER,1 do
       tcp:send(data.."\n")
