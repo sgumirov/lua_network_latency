@@ -45,6 +45,7 @@ function client_run()
   print("Client started")
   local ITER = 1 --10000
   -- load namespace
+  local socket = require("socket")
   local con = assert(socket.tcp())
 
   print("Client: Connecting")
