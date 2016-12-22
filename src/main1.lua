@@ -47,6 +47,7 @@ function client_run()
   -- load namespace
   local con = assert(socket.tcp())
 
+  print("Client: Connecting")
   if con:connect("127.0.0.1", 44444) then
     con:settimeout(0)
     con:setoption('tcp-nodelay', true)
@@ -61,7 +62,7 @@ function client_run()
       end
     end
     local dt = os.time()-t
-    printf("%d iterations completed in %s ms", tostring(1000*(dt)))
+    printf("%d iterations completed in %s ms", ITER, tostring(1000*(dt)))
   else
     print("Client: cannot connect")
   end
