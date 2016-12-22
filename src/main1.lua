@@ -44,8 +44,9 @@ end
 
 local function main()
   --main_udp()
+  print("0")
   local run = coroutine.create(main_tcp())
-  print("1")
+  print("1 run="..run)
   coroutine.resume(run)
   print("2")
   
