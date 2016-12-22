@@ -43,25 +43,28 @@ end
 
 function client_run()
   print("Client started")
-  local ITER = 10000
+  local ITER = 1 --10000
   -- load namespace
   local con = assert(socket.tcp())
 
-  con:connect("127.0.0.1", 44444);
-  con:settimeout(0)
-  con:setoption('tcp-nodelay', true)
-  local data = "request"
-  print("Client: started benchmark")
-  t = os.time()
-  for i=1,ITER,1 do
-    con:send(data.."\n")
-    local rcvdata = con:receive("*1")
-    if (rcvdata ~= data) then
-      print("ERROR, recv="..rcvdata)
+  if con:connect("127.0.0.1", 44444) then
+    con:settimeout(0)
+    con:setoption('tcp-nodelay', true)
+    local data = "request"
+    print("Client: started benchmark")
+    t = os.time()
+    for i=1,ITER,1 do
+      con:send(data.."\n")
+      local rcvdata = con:receive("*1")
+      if (rcvdata ~= data) then
+        print("ERROR, recv="..rcvdata)
+      end
     end
+    local dt = os.time()-t
+    printf("%d iterations completed in %s ms", tostring(1000*(dt)))
+  else
+    print("Client: cannot connect")
   end
-  local dt = os.time()-t
-  printf("%d iterations completed in %s ms", 1000*(dt))
 end
 
 local function main()
