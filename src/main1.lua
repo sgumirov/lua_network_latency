@@ -41,29 +41,33 @@ local function server()
   end
 end
 
-function client_run()
+function client_run(host)
   print("Client started")
   local ITER = 1 --10000
   -- load namespace
   local socket = require("socket")
   local con = assert(socket.tcp())
+  if (host == nil) then host = "127.0.0.1" end
 
   print("Client: Connecting")
-  if con:connect("127.0.0.1", 44444) then
+  if con:connect(host, 44444) then
     con:settimeout(0)
     con:setoption('tcp-nodelay', true)
     local data = "request"
     print("Client: started benchmark")
-    t = os.time()
+    local t_total = 0
     for i=1,ITER,1 do
+      t = os.time()
       con:send(data.."\n")
       local rcvdata, err = con:receive()
+      local dt = os.time()-t
+      t_total = t_total + dt
       if err then
         print("ERROR, recv="..rcvdata)
       end
     end
-    local dt = os.time()-t
-    printf("%d iterations completed in %s ms", ITER, tostring(1000*(dt)))
+    printf("%d iterations completed in: %s ms", ITER, tostring(1000*(t_total)))
+    printf("latency is: %s us", tostring(1000000*(t_total)/ITER))
   else
     print("Client: cannot connect")
   end
@@ -76,7 +80,7 @@ local function main()
     coroutine.resume(server_coroutine)
   else
     local client = coroutine.create(client_run)
-    coroutine.resume(client)
+    coroutine.resume(client, arg[2]) --host only. port always the same
   end
 end
 
