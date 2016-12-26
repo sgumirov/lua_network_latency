@@ -1,4 +1,10 @@
 require('printf')
+ttool=false
+debug=true
+
+if ttool then
+  require('t-init') --initializes box, fills data
+end
 
 local function server()
   -- load namespace
@@ -27,7 +33,11 @@ local function server()
       while (not err and line ~= 'exit') do
         --print("Server: received line="..line)
         -- if there was no error, send it back to the client
-        client:send(line .. "\n")
+        if not ttool then 
+          client:send(line .. "\n")
+        else
+          client.send(t-get(line))
+        end 
         line, err = client:receive()
       end
 
@@ -63,14 +73,25 @@ function client_run(host)
     con:setoption('tcp-nodelay', true)
     local data = {"request"}
     print("Client: started benchmark")
-    local t_total = 0, rcvdata, err 
+    local t_total = 0, rcvdata, err
+    local req = {}
+    if debug then
+      req[1] = {'a', 50, 'b', 100, 'c', 400, 'd', 101, 'data', 500} 
+      req[2] = {'a', 50, 'b', 100, 'c', 400, 'd', 101, 'data', 500}
+    else 
+      print("TODO fill req")
+      os.exit(1)  
+    end
+    local r, rcvdata, err
+    t = os.time()
     for i=1,ITER,1 do
       for k,v in pairs(data) do
-        t = os.time()
-        con:send(v..tostring(i).."\n")
+        r = table.concat(v, " ").."\n"
+        if (debug) then printf("req='%s'", r) end
+        con:send(req)
         rcvdata, err = con:receive()
+        if (debug) then printf("res='%s'", rcvdata) end
         local dt = os.time()-t
-        t_total = t_total + dt
         if err then
           print("ERROR, recv="..rcvdata)
           break
@@ -78,6 +99,7 @@ function client_run(host)
       end
       if err then break end 
     end
+    t_total = t_total + dt
     if not err then
       printf("%d iterations completed in: %s ms", ITER, tostring(1000*(t_total)))
       printf("latency is: %s us", tostring(1000000*(t_total)/ITER))
