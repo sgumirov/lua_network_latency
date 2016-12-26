@@ -15,7 +15,8 @@ local function server()
   while 1 do
     -- wait for a connection from any client
     local client = server:accept()
-    print("Server: connection accepted")
+    con = con+1
+    --print("Server: connection accepted")
     
     local handler = function(client)
       -- make sure we don't block waiting for this client's line
@@ -24,26 +25,33 @@ local function server()
       local line, err = client:receive()
 
       while (not err and line ~= 'exit') do
+        --print("Server: received line="..line)
         -- if there was no error, send it back to the client
         client:send(line .. "\n")
         line, err = client:receive()
       end
-      if (err) then print("ERROR="..err) end
+
+      if (err) then print("Server: error="..err) end
       -- done with client, close the object
       client:close()
-      print("Server: closed con")
+      --print("Server: closed con")
     end
     
     local h = coroutine.create(handler)
     coroutine.resume(h, client)
-    con = con+1
-    print('accepted connection #'..con) 
+    print('Server: accepted connections count: '..con) 
   end
+end
+
+--overwrite system 'tostring' function to handle nils
+_tostring = tostring
+tostring = function (a)
+  if nil == a then return 'NIL' else return _tostring(a) end
 end
 
 function client_run(host)
   print("Client started")
-  local ITER = 1 --10000
+  local ITER = 1000000
   -- load namespace
   local socket = require("socket")
   local con = assert(socket.tcp())
@@ -53,21 +61,30 @@ function client_run(host)
   if con:connect(host, 44444) then
     con:settimeout(0)
     con:setoption('tcp-nodelay', true)
-    local data = "request"
+    local data = {"request"}
     print("Client: started benchmark")
-    local t_total = 0
+    local t_total = 0, rcvdata, err 
     for i=1,ITER,1 do
-      t = os.time()
-      con:send(data.."\n")
-      local rcvdata, err = con:receive()
-      local dt = os.time()-t
-      t_total = t_total + dt
-      if err then
-        print("ERROR, recv="..rcvdata)
+      for k,v in pairs(data) do
+        t = os.time()
+        con:send(v..tostring(i).."\n")
+        rcvdata, err = con:receive()
+        local dt = os.time()-t
+        t_total = t_total + dt
+        if err then
+          print("ERROR, recv="..rcvdata)
+          break
+        end
       end
+      if err then break end 
     end
-    printf("%d iterations completed in: %s ms", ITER, tostring(1000*(t_total)))
-    printf("latency is: %s us", tostring(1000000*(t_total)/ITER))
+    if not err then
+      printf("%d iterations completed in: %s ms", ITER, tostring(1000*(t_total)))
+      printf("latency is: %s us", tostring(1000000*(t_total)/ITER))
+      printf("random result = %s\n", tostring(res[2]))
+    else
+      printf("Error while executing test: %s", tostring(err))
+    end
   else
     print("Client: cannot connect")
   end
