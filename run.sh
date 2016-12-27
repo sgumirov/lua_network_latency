@@ -1,7 +1,8 @@
 #!/bin/bash
+lua="lua5.1"
 cd src
-lua main1.lua server &
+$lua remote_table_access.lua server &
 sleep 1
-lua main1.lua client
-killall lua
+$lua remote_table_access.lua client
+killall $lua
 cd ..

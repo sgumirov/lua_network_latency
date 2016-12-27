@@ -22,16 +22,17 @@ local function server()
     -- wait for a connection from any client
     local client = server:accept()
     con = con+1
-    --print("Server: connection accepted")
+    print("Server: connection accepted")
     
     local handler = function(client)
       -- make sure we don't block waiting for this client's line
-      --client:settimeout(10)
+      client:settimeout(10)
       -- receive the line
       local line, err = client:receive()
 
-      while (not err and line ~= 'exit') do
-        --print("Server: received line="..line)
+      --while (not err and line ~= 'exit') do
+      if not err then
+        print("Server: received line="..line)
         -- if there was no error, send it back to the client
         if not ttool then 
           client:send(line .. "\n")
@@ -40,7 +41,6 @@ local function server()
         end 
         line, err = client:receive()
       end
-
       if (err) then print("Server: error="..err) end
       -- done with client, close the object
       client:close()
@@ -71,7 +71,6 @@ function client_run(host)
   if con:connect(host, 44444) then
     con:settimeout(0)
     con:setoption('tcp-nodelay', true)
-    local data = {"request"}
     print("Client: started benchmark")
     local t_total = 0, rcvdata, err
     local req = {}
@@ -85,12 +84,14 @@ function client_run(host)
     local r, rcvdata, err
     t = os.time()
     for i=1,ITER,1 do
-      for k,v in pairs(data) do
+      for k,v in pairs(req) do
         r = table.concat(v, " ").."\n"
-        if (debug) then printf("req='%s'", r) end
-        con:send(req)
+        if (debug) then print("Client: req='"..r.."'") end
+        con:send(r)
+        print("Client: waiting for response...")
         rcvdata, err = con:receive()
-        if (debug) then printf("res='%s'", rcvdata) end
+        print("Client: response received")
+        if (debug) then print("Client: res="..rcvdata) end --problem is here
         local dt = os.time()-t
         if err then
           print("ERROR, recv="..rcvdata)
