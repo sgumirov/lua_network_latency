@@ -98,7 +98,7 @@ function client_run(host)
           break
         end
       end
-      if err then break end
+      --if err then break end
 --    end
     t_total = t_total + dt
     if not err then
