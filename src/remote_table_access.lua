@@ -23,7 +23,7 @@ local function server()
     local client = server:accept()
     con = con+1
     print("Server: connection accepted")
-    
+
     local handler = function(client)
       -- make sure we don't block waiting for this client's line
       client:settimeout(10)
@@ -83,14 +83,14 @@ function client_run(host)
     end
     local r, rcvdata, err
     t = os.time()
-    for i=1,ITER,1 do
+--    for i=1,ITER,1 do
       for k,v in pairs(req) do
         r = table.concat(v, " ").."\n"
         if (debug) then print("Client: req='"..r.."'") end
-        con:send(r)
-        print("Client: waiting for response...")
+        local s = con:send(r)
+        print("Client: sent. result="..tostring(s).." waiting for response...")
         rcvdata, err = con:receive()
-        print("Client: response received")
+        print("Client: response received (e=nil?"..tostring(err==nil)..", d==nil?"..tostring(rcvdata==nil))
         if (debug) then print("Client: res="..rcvdata) end --problem is here
         local dt = os.time()-t
         if err then
@@ -98,8 +98,8 @@ function client_run(host)
           break
         end
       end
-      if err then break end 
-    end
+      if err then break end
+--    end
     t_total = t_total + dt
     if not err then
       printf("%d iterations completed in: %s ms", ITER, tostring(1000*(t_total)))

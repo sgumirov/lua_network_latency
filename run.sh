@@ -1,5 +1,5 @@
 #!/bin/bash
-lua="lua5.1"
+lua="lua"
 cd src
 $lua remote_table_access.lua server &
 sleep 1
