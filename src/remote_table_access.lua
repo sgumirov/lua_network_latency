@@ -19,8 +19,9 @@ local function readline(sock)
 end
 
 local function trim12(s)
- local from = s:match"^%s*()"
- return from > #s and "" or s:match(".*%S", from)
+  if s == nil then return nil end
+  local from = s:match"^%s*()"
+  return from > #s and "" or s:match(".*%S", from)
 end
 
 local function server()
