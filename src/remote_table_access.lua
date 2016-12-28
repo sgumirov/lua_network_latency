@@ -1,6 +1,6 @@
 require('printf')
 ttool=false
-debug=true
+local debug=true
 PORT=44444
 if debug then ITER=1 else ITER = 1000000 end
 
@@ -85,7 +85,7 @@ function tcp_connect(host, port)
 end
 --end socket helpers--
 
-function client_run(host)
+local function client_run(host)
   print("Client started")
   -- load namespace
   local socket = box.socket('AF_INET', 'SOCK_STREAM', 'tcp')
