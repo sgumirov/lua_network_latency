@@ -1,45 +1,54 @@
-require('printf')
+-- CONFIG
 ttool=false
 local debug=true
 PORT=44444
 if debug then ITER=1 else ITER = 1000000 end
+-- END CONFIG
 
+-- init
 fiber=require('fiber')
 socket=require('socket')
-
-if ttool then
-  require('t-init') --initializes box, fills data
-else
-end
+require('printf')
+require('t-init') --initializes box, fills data
+-- end init
 
 local con = 0 --con counter
 
+local function readline(sock)
+  return sock:read('\n')
+end
+
+local function trim12(s)
+ local from = s:match"^%s*()"
+ return from > #s and "" or s:match(".*%S", from)
+end
+
 local function server()
-  -- loop forever waiting for clients
-  socket.tcp_server('0.0.0.0', 3302, function(client)
-    --client:nonblock(true)
+  print("Starting server at port: "..PORT)  
+  socket.tcp_server('0.0.0.0', PORT, function(client)
     con = con+1
     print("Server: connection accepted")
     -- receive the line
-    local line = client:receive()
+    local line = readline(client)
+    print(line)
 
     while (not err and line ~= 'exit') do
     --if not err then
       print("Server: received line="..line)
       -- if there was no error, send it back to the client
-      if not ttool then 
-        client:send(line .. "\n")
-      else
-        client.send(t-get(line))
-      end 
-      line, err = client:receive()
+      local res = tget(line)
+      print("Server response: ")
+      print(res)
+      client:send(res)
+      line = readline(client)
+      if 'exit' == trim12(line) then print("Server: exit -> closing client") break end
     end
     if (err) then print("Server: error="..err) end
     -- done with client, close the object
-    client:close()
-    --print("Server: closed con")
+    --client:close()
+    print("Server: closed con")
     print('Server: accepted connections count: '..con) 
-  end
+  end)
 end
 
 --overwrite system 'tostring' function to handle nils
@@ -87,6 +96,7 @@ local function client_run(host)
     if debug then
       req[1] = {'a', 50, 'b', 100, 'c', 400, 'd', 101, 'data', 500} 
       req[2] = {'a', 50, 'b', 100, 'c', 400, 'd', 101, 'data', 500}
+      req[3] = {'exit'}
     else 
       print("TODO fill req")
       os.exit(1)  

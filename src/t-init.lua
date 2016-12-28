@@ -28,7 +28,7 @@ local function init_db()
   end
 end
 
-local function get(table_name, row)
+local function memget(table_name, row)
   --printf("get(%s, %s)=", table_name, row)
   local tmp
   row = tonumber(row)
@@ -36,6 +36,7 @@ local function get(table_name, row)
   elseif table_name == 'b' then tmp=b[row]
   elseif table_name == 'c' then tmp=c[row]
   elseif table_name == 'd' then tmp=d[row]
+  elseif table_name == 'data' then tmp=data[row]
   end
   --print(tmp)
   return tmp
@@ -63,27 +64,27 @@ else
   init_inmem()
 end
 
-local function t_get(l)
+local function dbget(table_name, row)
+  printf("get_db(%s; %s)\n", table_name, row)
+  return box.space[table_name]:select(tostring(row))[1][2]
+end
+
+function tget(l)
   local k = {}
-  for word in s:gmatch("%w+") do table.insert(k, word) end
+  for word in l:gmatch("%w+") do table.insert(k, word) end
   local ret = {}
-  local table
+  local tname
   if ttool then
     for i=1,#k,2 do
-      table = k[i]
-      table.insert(ret, t_get(table, k[i+1]))
+      tname = k[i]
+      table.insert(ret, dbget(tname, k[i+1]))
     end
   else
     for i=1,#k,2 do
-      table = k[i]
-      table.insert(ret, get(table, k[i+1]))
+      tname = k[i]
+      table.insert(ret, memget(tname, k[i+1]))
     end
   end
   return table.concat(ret, " ")
-end
-
-local function get_db(table_name, row)
-  printf("get_db(%s; %s)\n", table_name, row)
-  return box.space[table_name]:select(tostring(row))[1][2]
 end
 
