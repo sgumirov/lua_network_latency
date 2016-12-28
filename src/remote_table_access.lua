@@ -12,50 +12,34 @@ if ttool then
 else
 end
 
+local con = 0 --con counter
+
 local function server()
-  -- load namespace
-  local socket = socket('AF_INET', 'SOCK_STREAM', 'tcp')
-  -- create a TCP socket and bind it to the local host, at any port
-  socket:nonblock(true)
-  assert(socket.bind("127.0.0.1", PORT))
-  socket:listen(64)
-  -- find out which port the OS chose for us
-  local ip, port = socket:getsockname()
-  -- print a message informing what's up
-  print("Please telnet to localhost on port " .. port)
-  local con = 0 --counter
   -- loop forever waiting for clients
-  while ms:readable() do
-    -- wait for a connection from any client
-    local client = socket:accept()
-    client:nonblock(true)
+  socket.tcp_server('0.0.0.0', 3302, function(client)
+    --client:nonblock(true)
     con = con+1
     print("Server: connection accepted")
-    fiber.create(function(client)
-      -- make sure we don't block waiting for this client's line
-      client:settimeout(10)
-      -- receive the line
-      local line, err = client:receive()
+    -- receive the line
+    local line = client:receive()
 
-      --while (not err and line ~= 'exit') do
-      if not err then
-        print("Server: received line="..line)
-        -- if there was no error, send it back to the client
-        if not ttool then 
-          client:send(line .. "\n")
-        else
-          client.send(t-get(line))
-        end 
-        line, err = client:receive()
-      end
-      if (err) then print("Server: error="..err) end
-      -- done with client, close the object
-      client:close()
-      --print("Server: closed con")
-    end, client)
+    while (not err and line ~= 'exit') do
+    --if not err then
+      print("Server: received line="..line)
+      -- if there was no error, send it back to the client
+      if not ttool then 
+        client:send(line .. "\n")
+      else
+        client.send(t-get(line))
+      end 
+      line, err = client:receive()
+    end
+    if (err) then print("Server: error="..err) end
+    -- done with client, close the object
+    client:close()
+    --print("Server: closed con")
     print('Server: accepted connections count: '..con) 
   end
-  socket:close()
 end
 
 --overwrite system 'tostring' function to handle nils
@@ -90,7 +74,7 @@ end
 local function client_run(host)
   print("Client started")
   -- load namespace
-  local socket = box.socket('AF_INET', 'SOCK_STREAM', 'tcp')
+  local socket = socket('AF_INET', 'SOCK_STREAM', 'tcp')
   if (host == nil) then host = "127.0.0.1" end
 
   print("Client: Connecting")
