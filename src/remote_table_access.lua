@@ -90,6 +90,9 @@ end
 local function client_run(host)
   print("Client started")
   -- load namespace
+  box.cfg{
+    wal_mode = "none",
+  }
   local socket = box.socket('AF_INET', 'SOCK_STREAM', 'tcp')
   if (host == nil) then host = "127.0.0.1" end
 
