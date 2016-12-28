@@ -1,6 +1,6 @@
 #!/bin/bash
 lua="tarantool"
-killall $lua
+#killall $lua
 cd src
-$lua remote_table_access.lua client 192.168.3.100
+$lua remote_table_access.lua client 127.0.0.1 44444
 cd ..

@@ -34,7 +34,8 @@ eprint = function (s)
   print(s)
 end
 
-local function server()
+local function server_run(prt)
+  if prt ~= nil then PORT = prt end
   eprint("Starting server at port: "..PORT)  
   socket.tcp_server('0.0.0.0', PORT, function(client)
     con = con+1
@@ -68,13 +69,14 @@ tostring = function (a)
   if nil == a then return 'NIL' else return _tostring(a) end
 end
 
-local function client_run(host)
+local function client_run(host, port)
   eprint("Client started")
   if host == "" or host == nil then host = "127.0.0.1" end
+  if port ~= nil then PORT = port end
 
-  print("Client: Connecting")
+  print("Client: Connecting to: "..host..":"..PORT)
   local con = socket.tcp_connect(host, PORT)
-  if not con:error() then
+  if con ~= nil and not con:error() then
     --con:setoption('tcp-nodelay', true)
     local t_total = 0
     local req = {}
@@ -128,15 +130,15 @@ local function client_run(host)
       eprint("Error while executing test: %s", tostring(err))
     end
   else
-    print("Client: cannot connect")
+    printf("Client: cannot connect")
   end
 end
 
 local function main()
   if arg[1] == 'server' then
-    server()
+    server_run(arg[2])
   else
-    client_run(arg[2])
+    client_run(arg[2], arg[3])
   end
 end
 
