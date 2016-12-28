@@ -4,6 +4,8 @@ debug=true
 PORT=44444
 if debug then ITER=1 else ITER = 1000000 end
 
+fiber=require('fiber')
+
 if ttool then
   require('t-init') --initializes box, fills data
 end
@@ -27,8 +29,7 @@ local function server()
     client:nonblock(true)
     con = con+1
     print("Server: connection accepted")
-
-    box.fiber.wrap(function(client)
+    fiber.create(function(client)
       -- make sure we don't block waiting for this client's line
       client:settimeout(10)
       -- receive the line
@@ -138,11 +139,9 @@ end
 
 local function main()
   if arg[1] == 'server' then
-    local server_coroutine = coroutine.create(server())
-    coroutine.resume(server_coroutine)
+    server()
   else
-    local client = coroutine.create(client_run)
-    coroutine.resume(client, arg[2]) --host only. port always the same
+    client(arg[2])
   end
 end
 
