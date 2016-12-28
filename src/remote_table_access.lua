@@ -5,18 +5,16 @@ PORT=44444
 if debug then ITER=1 else ITER = 1000000 end
 
 fiber=require('fiber')
+socket=require('socket')
 
 if ttool then
   require('t-init') --initializes box, fills data
 else
-  box.cfg{
-    wal_mode = "none",
-  }  
 end
 
 local function server()
   -- load namespace
-  local socket = box.socket('PF_INET', 'SOCK_STREAM', 'tcp')
+  local socket = socket('AF_INET', 'SOCK_STREAM', 'tcp')
   -- create a TCP socket and bind it to the local host, at any port
   socket:nonblock(true)
   assert(socket.bind("127.0.0.1", PORT))
