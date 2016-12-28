@@ -33,7 +33,7 @@ local function server()
     local line = readline(client)
     print(line)
 
-    while (not err and line ~= 'exit') do
+    while (line ~= nil and line ~= 'exit') do
     --if not err then
       print("Server: received line="..line)
       -- if there was no error, send it back to the client
@@ -44,7 +44,7 @@ local function server()
       line = readline(client)
       if 'exit' == trim12(line) then print("Server: exit -> closing client") break end
     end
-    if (err) then print("Server: error="..err) end
+    if line == nil then print("Server: error="..client:error()) end
     -- done with client, close the object
     --client:close()
     print("Server: closed con")
