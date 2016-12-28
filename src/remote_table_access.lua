@@ -8,6 +8,10 @@ fiber=require('fiber')
 
 if ttool then
   require('t-init') --initializes box, fills data
+else
+  box.cfg{
+    wal_mode = "none",
+  }  
 end
 
 local function server()
