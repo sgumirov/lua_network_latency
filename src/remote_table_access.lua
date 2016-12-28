@@ -141,7 +141,7 @@ local function main()
   if arg[1] == 'server' then
     server()
   else
-    client(arg[2])
+    client_run(arg[2])
   end
 end
 
