@@ -65,7 +65,7 @@ else
 end
 
 local function dbget(table_name, row)
-  printf("get_db(%s; %s)\n", table_name, row)
+  if not debug then printf("get_db(%s; %s)\n", table_name, row) end
   return box.space[table_name]:select(tostring(row))[1][2]
 end
 
