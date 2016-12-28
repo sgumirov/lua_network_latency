@@ -82,16 +82,14 @@ end
 
 local function client_run(host)
   print("Client started")
-  -- load namespace
-  local socket = socket('AF_INET', 'SOCK_STREAM', 'tcp')
-  if (host == nil) then host = "127.0.0.1" end
+  if host == "" or host == nil then host = "127.0.0.1" end
 
   print("Client: Connecting")
   local con = socket.tcp_connect(host, PORT)
   if not con:error() then
-    con:setoption('tcp-nodelay', true)
+    --con:setoption('tcp-nodelay', true)
     print("Client: started benchmark")
-    local t_total = 0, rcvdata, err
+    local t_total = 0
     local req = {}
     if debug then
       req[1] = {'a', 50, 'b', 100, 'c', 400, 'd', 101, 'data', 500} 
