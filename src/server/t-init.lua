@@ -2,6 +2,8 @@ MAX = 1000 --number of values in tables
 
 math.randomseed(os.time())
 
+require("printf")
+
 --initialize and fill datamodel tables to use for dereferencing expressions
 --this function is used from shard_main.lua, so should be on top
 local function init_db()
@@ -29,7 +31,7 @@ local function init_db()
 end
 
 local function memget(table_name, row)
-  --printf("get(%s, %s)=", table_name, row)
+  if debug then printf("get(%s, %s)=", table_name, row) end
   local tmp
   row = tonumber(row)
   if     table_name == 'a' then tmp=a[row]
@@ -38,7 +40,7 @@ local function memget(table_name, row)
   elseif table_name == 'd' then tmp=d[row]
   elseif table_name == 'data' then tmp=data[row]
   end
-  --print(tmp)
+  if debug then printf("%s\n", tmp) end
   return tmp
 end
 

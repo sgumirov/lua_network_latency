@@ -6,7 +6,7 @@ WIDTH=2 --number of expressions.
 -- Note that number of dereferences is slightly more than DEPTH*WIDTH due to randomness of references in expressions.
 -- For example 4*2600 gives ~10000 dereferences. 
 
-debug=false --debug means use small data and print verbosely. True sets REPEATS option to 1.
+debug=true --debug means use small data and print verbosely. True sets REPEATS option to 1.
 inmem=true --false means use tarantool engine, true means use Lua tables
 sharding=false --use sharding
 batch=false --use q_insert to fill tables
@@ -293,6 +293,7 @@ local function execute(expr,a,b,c,d,data, request, con)
   end
   for i=1,#expr,1 do
     local e = expr[i]
+    if debug then printf("Executing expression: %s", tostring(e)) end
     if deep == false then
       execExpr(i, e, results, a,b,c,d,data, request, con)
     else
@@ -436,7 +437,7 @@ end
 
 local function main_rpc(host, port)
   debug = true
-  require("rpc")
+  require("client")
   debug=true
   local con = assert(serverconnect(host, port))
   

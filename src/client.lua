@@ -1,16 +1,14 @@
 -- CONFIG
-ttool=true
 local debug=true
 PORT=44444
 REPEATS=1
-if debug then ITER=1 else ITER = 10000 end
+--if debug then ITER=1 else ITER = 10000 end
+MAX=1000
 -- END CONFIG
 
 -- init
-fiber=require('fiber')
 socket=require('socket')
 require('printf')
-require('t-init') --initializes box, fills data
 -- end init
 
 local con = 0 --con counter
@@ -18,6 +16,7 @@ local con = 0 --con counter
 local function readline(sock)
   return sock:read('\n')
 end
+
 
 local function trim12(s)
   if s == nil then return nil end
@@ -41,36 +40,6 @@ tostring = function (a)
   if nil == a then return 'NIL' else return _tostring(a) end
 end
 
-
-local function server_run(prt)
-  if prt ~= nil then PORT = prt end
-  eprint("Starting server at port: "..PORT)  
-  socket.tcp_server('0.0.0.0', PORT, function(client)
-    con = con+1
-    print("Server: connection accepted")
-    -- receive the line
-    local line = readline(client)
-    print(line)
-
-    while (line ~= nil and line ~= 'exit') do
-    --if not err then
-      print("Server: received line="..line)
-      -- if there was no error, send it back to the client
-      local res = tget(line)
-      print("Server response: ")
-      print(res)
-      client:send(res.."\n")
-      line = readline(client)
-      if 'exit' == trim12(line) then print("Server: exit -> closing client") break end
-    end
-    if line == nil then eprint("Server: error="..client:error()) end
-    -- done with client, close the object
-    --client:close()
-    eprint("Server: closed con")
-    eprint('Server: accepted connections count: '..con) 
-  end)
-end
-
 function serverconnect(host, port)
   if host == "" or host == nil then host = "127.0.0.1" end
   if port ~= nil then PORT = port end
@@ -90,7 +59,7 @@ function request(con, req)
   if (debug) then print("Client::request() con="..tostring(con).." data='"..r.."'") end
   local s = con:send(r)
   print("Client: sent. operation result="..tostring(s)..". waiting for response...")
-  local res = readline(con)
+  local res = trim12(readline(con))
   print("Client: response='"..tostring(res).."'")
   return res
 end
@@ -115,7 +84,8 @@ local function preparedata()
   printf("Client: benchmark test preparation FINISHED in %s ns\n", tostring(1000000000*t))
   return req
 end
-local function test(host, port)
+
+local function client(host, port)
   local con = assert(serverconnect(host, port))
   local t_total = 0
   local req = preparedata()
@@ -146,19 +116,15 @@ local function test(host, port)
 end 
 
 function main()
-  if arg[1] == 'server' then
-    server_run(arg[2])
-  else
-    test(arg[2], arg[3])
-  end
+  client(arg[1], arg[2])
 end
 
 function testrpc()
   local con = assert(serverconnect(host, port))
-  local res=request(con, {'data', 1})
+  local res =request(con, {'data', 1})
   print(res)
   assert(res=='1000')
 end
 
-testrpc()
+--testrpc()
 --main()
