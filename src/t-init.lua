@@ -69,19 +69,18 @@ local function dbget(table_name, row)
   return box.space[table_name]:select(tostring(row))[1][2]
 end
 
+-- Parameter is string filled with tablenames and keys separated with spaces. For example: "a 12 b 151 data 141" is for a[12], b[151], etc.
+-- Return string is values from tables formatted same way.
 function tget(l)
   local k = {}
   for word in l:gmatch("%w+") do table.insert(k, word) end
   local ret = {}
   local tname
-  if ttool then
-    for i=1,#k,2 do
-      tname = k[i]
+  for i=1,#k,2 do
+    tname = k[i]
+    if ttool then
       table.insert(ret, dbget(tname, k[i+1]))
-    end
-  else
-    for i=1,#k,2 do
-      tname = k[i]
+    else
       table.insert(ret, memget(tname, k[i+1]))
     end
   end
