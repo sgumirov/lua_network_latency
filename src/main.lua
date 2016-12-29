@@ -2,17 +2,17 @@
 -- CONFIG options --
 MAX = 1000 --number of values in tables
 DEPTH=4    --length of each expression
-WIDTH=2600 --number of expressions. 
+WIDTH=2 --number of expressions. 
 -- Note that number of dereferences is slightly more than DEPTH*WIDTH due to randomness of references in expressions.
 -- For example 4*2600 gives ~10000 dereferences. 
 
 debug=false --debug means use small data and print verbosely. True sets REPEATS option to 1.
-inmem=false --false means use tarantool engine, true means use Lua tables
-sharding=true --use sharding
-batch=true --use q_insert to fill tables
+inmem=true --false means use tarantool engine, true means use Lua tables
+sharding=false --use sharding
+batch=false --use q_insert to fill tables
 wide=false --means execute expressions layer by layer (breadth traversal) 
-deep=true  --means run fiber for each expression simultaneously (depth traversal)
-REPEATS=10 --repeat dereferencing benchmark this time. Note that debug=true effectively sets this value to 1
+deep=false  --means run fiber for each expression simultaneously (depth traversal)
+REPEATS=1 --repeat dereferencing benchmark this time. Note that debug=true effectively sets this value to 1
 -- END CONFIG --
 
 Count=0
@@ -169,6 +169,7 @@ local function get(a,b,c,d,table_name, row)
   elseif table_name == 'b' then tmp=b[row]
   elseif table_name == 'c' then tmp=c[row]
   elseif table_name == 'd' then tmp=d[row]
+  elseif table_name == 'data' then tmp=data[row]
   end
   --print(tmp)
   return tmp
@@ -244,26 +245,35 @@ local function execute_wide(expr, a,b,c,d,data)
   return results
 end
 
-local function execExpr(i, e, results, a,b,c,d,data)
+local function execExpr(i, e, results, a,b,c,d,data, request, con)
   local res = {}
   local tname = 'a'
+  local rpc = false
+  if request ~= nil and con ~= nil then 
+    get = function (a,b,c,d, tname,val, con)
+      return request(con, {tname, val})
+    end 
+    get_db = function (tname,val, con)
+      return request(con, {tname, val})
+    end 
+  end 
   for s=1,#e,1 do
     if tname == 'd' then
       local val
       if inmem then
-        val = tonumber(d[tonumber(e[s])])
+        val = tonumber(get(a,b,c,d,'d', e[s], con))
         res[s] = data[val]
       else
-        val = tonumber(get_db('d', e[s]))
-        res[s] = get_db('data', val)
+        val = tonumber(get_db('d', e[s], con))
+        res[s] = get_db('data', val, con)
       end
       Count = Count + 2
       break
     end 
     if inmem then
-      tname = get(a,b,c,d, tname, e[s])
+      tname = get(a,b,c,d, tname, e[s], con)
     else
-      tname = get_db(tname, e[s]) 
+      tname = get_db(tname, e[s], con)
     end
     Count = Count + 1
     res[s] = tname
@@ -273,7 +283,7 @@ end
 
 exprCount = 0
 
-local function execute(expr,a,b,c,d,data)
+local function execute(expr,a,b,c,d,data, request, con)
   local results = {}
   if debug then printf("execute(): expr# = %d\n", #expr) end
   local fiber = nil
@@ -284,17 +294,17 @@ local function execute(expr,a,b,c,d,data)
   for i=1,#expr,1 do
     local e = expr[i]
     if deep == false then
-      execExpr(i, e, results, a,b,c,d,data)
+      execExpr(i, e, results, a,b,c,d,data, request, con)
     else
-      fiber.create(function (i, e, results, a,b,c,d,data) 
-          execExpr(i, e,results,a,b,c,d,data)
+      fiber.create(function (i, e, results, a,b,c,d,data, request, con) 
+          execExpr(i, e,results,a,b,c,d,data, request, con)
           exprCount = exprCount - 1 
-        end, i, e, results, a,b,c,d,data)
+        end, i, e, results, a,b,c,d,data, request, con)
     end
   end
   if deep == true then 
     while exprCount > 0 do
-      fiber.sleep(1)
+      --fiber.sleep(1)
       print("exprCnt="..exprCount)    
     end
   end
@@ -424,4 +434,42 @@ local function main()
   end
 end
 
-main()
+local function main_rpc(host, port)
+  debug = true
+  require("rpc")
+  debug=true
+  local con = assert(serverconnect(host, port))
+  
+  local t, e
+  local t0=os.clock()
+  
+  e = init_expressions()
+
+  local res = {}
+  if debug then REPEATS = 1 end
+
+  print("processing test. please wait.")
+
+  t0 = os.clock()
+  for z=1,REPEATS,1 do
+    if inmem then
+      if wide == false then
+        res[z] = execute(e,a,b,c,d,data, request, con)
+      else 
+        res[z] = execute_wide(e,a,b,c,d,data, request, con)
+      end
+    else
+      if wide == false then
+        res[z] = execute(e,nil,nil,nil,nil,nil, request, con)
+      else
+        res[z] = execute_wide(e,nil,nil,nil,nil,nil, request, con)
+      end
+    end
+  end
+  t = os.clock()
+  print("executed in "..1000.0*(t-t0).." ms; total dereferences: "..Count)
+  print("executed in "..1000.0*(t-t0).." ms; single dereference time: "..((t-t0)*1000000)/Count.." \181s = "..((t-t0)*1000000000)/Count.." ns")
+end
+
+--main()
+main_rpc(arg[1], tonumber(arg[2]))
